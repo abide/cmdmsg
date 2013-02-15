@@ -102,7 +102,7 @@ class cmdmsg():
         if len(self.msg) > len(msg):
             extra = len(self.msg) - len(msg)
             stderr.write("\b" * extra + " " * extra)
-            stderr.flush()
+            stderr.flush() # needed on windows
         #print (offset, msg, msg[offset:])
         stderr.write("\b" * len(self.msg[offset:]) + msg[offset:])
         stderr.flush()
