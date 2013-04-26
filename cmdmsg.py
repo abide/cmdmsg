@@ -95,7 +95,7 @@ class cmdmsg():
         # multi-byte characters really futz with this stuff
         msg = msg.replace("\t", " ")
         if len(msg) > (self.width - 1):
-            ends = self.width / 2 - 2
+            ends = int(self.width / 2 - 2) # for the benefit of python3 which returns a float from the division (even if it's an even number)
             msg = msg[:ends] + "..." + msg[-ends:]
         offset = len(commonprefix([self.msg, msg]))
         # BS moves cursor but doesn't appear to remove content - so print spaces
