@@ -85,12 +85,12 @@ class cmdmsg():
         self.msg = ""
         self.height, self.width = getTerminalSize()
         #print (self.height, self.width)
-        self.last = datetime.now()
+        self.last = None
         self.interval = interval
 
     def say(self, msg, interval = None):
         if interval == None: interval = self.interval
-        if datetime.now() - self.last < interval: return
+        if self.last != None and datetime.now() - self.last < interval: return
         self.last = datetime.now()
         # multi-byte characters really futz with this stuff
         msg = msg.replace("\t", " ")
