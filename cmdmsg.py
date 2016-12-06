@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # coding=utf-8
-from datetime import datetime, timedelta
+from datetime import timedelta
+from time import time
 from os.path import commonprefix
 from sys import stderr
 
@@ -90,14 +91,14 @@ class cmdmsg():
         self.msg = ""
         self.height, self.width = get_terminal_size()
         self.last = None
-        self.interval = interval
+        self.interval = interval.total_seconds()
 
     def say(self, msg, interval=None):
         if interval is None:
             interval = self.interval
-        if self.last is not None and datetime.now() - self.last < interval:
+        if self.last is not None and time() - self.last < interval:
             return
-        self.last = datetime.now()
+        self.last = time()
         # multi-byte characters really futz with this stuff
         msg = msg.replace("\t", " ")
         if len(msg) > (self.width - 1):
@@ -114,7 +115,7 @@ class cmdmsg():
         self.msg = msg
 
     def saynow(self, msg):
-        self.say(msg, timedelta(0, 0, 0))
+        self.say(msg, 0)
 
     def end(self):
         self.saynow("")
