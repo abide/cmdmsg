@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # coding=utf-8
+from datetime import datetime, timedelta
+from os.path import commonprefix
+from sys import stderr
+
 
 # a utility function from dzone.com/snippets
 def find_executable(executable, path=None):
@@ -8,7 +12,8 @@ def find_executable(executable, path=None):
     os.environ['PATH']).  Returns the complete filename or None if not
     found
     """
-    import os, os.path, sys
+    import os.path
+    import sys
     if path is None:
         path = os.environ['PATH']
     paths = path.split(os.pathsep)
@@ -18,7 +23,7 @@ def find_executable(executable, path=None):
         # executable files on OS/2 can have an arbitrary extension, but
         # .exe is automatically appended if no dot is present in the name
         if not ext:
-            executable = executable + ".exe"
+            executable += ".exe"
     elif sys.platform == 'win32':
         pathext = os.environ['PATHEXT'].lower().split(os.pathsep)
         (base, ext) = os.path.splitext(executable)
@@ -38,11 +43,13 @@ def find_executable(executable, path=None):
 
 
 # a utility function taken from stackoverflow
-def getTerminalSize():
+def get_terminal_size():
     """
     returns (lines:int, cols:int)
     """
-    import os, struct
+    import os
+    import struct
+
     def ioctl_GWINSZ(fd):
         import fcntl, termios
         return struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
@@ -75,35 +82,33 @@ def getTerminalSize():
     except:
         pass
     # i give up. return default.
-    return (25, 80)
+    return 25, 80
 
-from datetime import datetime, timedelta
-from os.path import commonprefix
-from sys import stderr
+
 class cmdmsg():
-    def __init__(self, interval = timedelta(0, 1, 0)):
+    def __init__(self, interval=timedelta(0, 1, 0)):
         self.msg = ""
-        self.height, self.width = getTerminalSize()
-        #print (self.height, self.width)
+        self.height, self.width = get_terminal_size()
         self.last = None
         self.interval = interval
 
-    def say(self, msg, interval = None):
-        if interval == None: interval = self.interval
-        if self.last != None and datetime.now() - self.last < interval: return
+    def say(self, msg, interval=None):
+        if interval is None:
+            interval = self.interval
+        if self.last is not None and datetime.now() - self.last < interval:
+            return
         self.last = datetime.now()
         # multi-byte characters really futz with this stuff
         msg = msg.replace("\t", " ")
         if len(msg) > (self.width - 1):
-            ends = int(self.width / 2 - 2) # for the benefit of python3 which returns a float from the division (even if it's an even number)
+            ends = int(self.width / 2 - 2)
             msg = msg[:ends] + "..." + msg[-ends:]
         offset = len(commonprefix([self.msg, msg]))
         # BS moves cursor but doesn't appear to remove content - so print spaces
         if len(self.msg) > len(msg):
             extra = len(self.msg) - len(msg)
             stderr.write("\b" * extra + " " * extra)
-            stderr.flush() # needed on windows
-        #print (offset, msg, msg[offset:])
+            stderr.flush()  # needed on windows
         stderr.write("\b" * len(self.msg[offset:]) + msg[offset:])
         stderr.flush()
         self.msg = msg
