@@ -10,7 +10,7 @@ from terminalsize import get_terminal_size
 class cmdmsg():
     def __init__(self, interval=timedelta(0, 1, 0)):
         self.msg = ""
-        self.height, self.width = get_terminal_size()
+        self.width, self.height  = get_terminal_size()
         self.last = None
         self.interval = interval.total_seconds()
         self.silent = self.width is None
