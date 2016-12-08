@@ -4,86 +4,7 @@ from datetime import timedelta
 from time import time
 from os.path import commonprefix
 from sys import stderr
-
-
-# a utility function from dzone.com/snippets
-def find_executable(executable, path=None):
-    """Try to find 'executable' in the directories listed in 'path' (a
-    string listing directories separated by 'os.pathsep'; defaults to
-    os.environ['PATH']).  Returns the complete filename or None if not
-    found
-    """
-    import os.path
-    import sys
-    if path is None:
-        path = os.environ['PATH']
-    paths = path.split(os.pathsep)
-    extlist = ['']
-    if os.name == 'os2':
-        (base, ext) = os.path.splitext(executable)
-        # executable files on OS/2 can have an arbitrary extension, but
-        # .exe is automatically appended if no dot is present in the name
-        if not ext:
-            executable += ".exe"
-    elif sys.platform == 'win32':
-        pathext = os.environ['PATHEXT'].lower().split(os.pathsep)
-        (base, ext) = os.path.splitext(executable)
-        if ext.lower() not in pathext:
-            extlist = pathext
-    for ext in extlist:
-        execname = executable + ext
-        if os.path.isfile(execname):
-            return execname
-        else:
-            for p in paths:
-                f = os.path.join(p, execname)
-                if os.path.isfile(f):
-                    return f
-    else:
-        return None
-
-
-# a utility function taken from stackoverflow
-def get_terminal_size():
-    """
-    returns (lines:int, cols:int)
-    """
-    import os
-    import struct
-
-    def ioctl_GWINSZ(fd):
-        import fcntl, termios
-        return struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
-    # try stdin, stdout, stderr
-    for fd in (0, 1, 2):
-        try:
-            return ioctl_GWINSZ(fd)
-        except:
-            pass
-    # try os.ctermid()
-    try:
-        fd = os.open(os.ctermid(), os.O_RDONLY)
-        try:
-            return ioctl_GWINSZ(fd)
-        finally:
-            os.close(fd)
-    except:
-        pass
-    # try `stty size`
-    if find_executable("stty"):
-        try:
-            size = tuple(int(x) for x in os.popen("stty size", "r").read().split())
-            assert len(size) == 2
-            return size
-        except:
-            pass
-    # try environment variables
-    try:
-        return tuple(int(os.getenv(var)) for var in ("LINES", "COLUMNS"))
-    except:
-        pass
-    # i give up. return default.
-    return 25, 80
+from terminalsize import get_terminal_size
 
 
 class cmdmsg():
@@ -92,8 +13,11 @@ class cmdmsg():
         self.height, self.width = get_terminal_size()
         self.last = None
         self.interval = interval.total_seconds()
+        self.silent = self.width is None
 
     def say(self, msg, interval=None):
+        if self.silent:
+            return
         if interval is None:
             interval = self.interval
         if self.last is not None and time() - self.last < interval:
