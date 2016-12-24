@@ -13,28 +13,35 @@ class cmdmsg():
         self.width, self.height  = get_terminal_size()
         self.last = None
         self.interval = interval.total_seconds()
-        self.silent = self.width is None
+        self.silent = False
+        self.live = self.width is not None
+
 
     def say(self, msg, interval=None):
         if self.silent:
             return
         if interval is None:
             interval = self.interval
+        if not self.live:
+            interval = 5
         if self.last is not None and time() - self.last < interval:
             return
         self.last = time()
-        # multi-byte characters really futz with this stuff
-        msg = msg.replace("\t", " ")
-        if len(msg) > (self.width - 1):
-            ends = int(self.width / 2 - 2)
-            msg = msg[:ends] + "..." + msg[-ends:]
-        offset = len(commonprefix([self.msg, msg]))
-        # BS moves cursor but doesn't appear to remove content - so print spaces
-        if len(self.msg) > len(msg):
-            extra = len(self.msg) - len(msg)
-            stderr.write("\b" * extra + " " * extra)
-            stderr.flush()  # needed on windows
-        stderr.write("\b" * len(self.msg[offset:]) + msg[offset:])
+        if self.live:
+            # multi-byte characters really futz with this stuff
+            msg = msg.replace("\t", " ")
+            if len(msg) > (self.width - 1):
+                ends = int(self.width / 2 - 2)
+                msg = msg[:ends] + "..." + msg[-ends:]
+            offset = len(commonprefix([self.msg, msg]))
+            # BS moves cursor but doesn't appear to remove content - so print spaces
+            if len(self.msg) > len(msg):
+                extra = len(self.msg) - len(msg)
+                stderr.write("\b" * extra + " " * extra)
+                stderr.flush()  # needed on windows
+            stderr.write("\b" * len(self.msg[offset:]) + msg[offset:])
+        else:
+            stderr.write(msg + "\n")
         stderr.flush()
         self.msg = msg
 
@@ -45,5 +52,8 @@ class cmdmsg():
         self.saynow("")
 
     def spit(self, msg):
-        stderr.write("\r" + " " * len(self.msg) + "\r" + msg + "\n" + self.msg)
+        if self.live:
+            stderr.write("\r" + " " * len(self.msg) + "\r" + msg + "\n" + self.msg)
+        else:
+            stderr.write(msg + "\n")
         stderr.flush()
